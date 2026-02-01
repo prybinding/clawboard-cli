@@ -19,15 +19,19 @@ clawboard --help
 The CLI reads:
 - `~/.config/trello/credentials.json` with `{ "key": "...", "token": "..." }`
 
-If `~/.config/trello/board.json` is missing, the CLI will **auto-create** a board named **Clawboard** with lists:
-- `To do`
-- `Doing`
-- `Done`
+Use `clawboard init` to set up auth + board.
 
-(Override default board name with `CLAWBOARD_NAME`.)
+- If `~/.config/trello/credentials.json` is missing, `clawboard init --key ... --token ...` will write it.
+- If `~/.config/trello/board.json` is missing, commands will **auto-create** a board named **Clawboard** with lists:
+  - `To do`
+  - `Doing`
+  - `Done`
+
+Override default board name with `CLAWBOARD_NAME` (or `clawboard init --name "..."`).
 
 ## Commands
 
+- `clawboard init`
 - `clawboard status`
 - `clawboard list todo|doing|done --limit 20`
 - `clawboard add "Title" [--desc "..."] [--due 2026-02-03] [--list todo|doing|done]`

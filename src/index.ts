@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { loadCreds } from "./config.js";
 import { ensureBoardConfig } from "./init.js";
+import { checkCreds, initAuthFromArgs, maybeLoadCreds } from "./auth.js";
 import { fmtDate, fmtNum, mdEscape, printJson, printMarkdown, truncate } from "./format.js";
 import { resolveCardId, trelloRequest } from "./trello.js";
 
@@ -14,6 +15,45 @@ program
   .description("Manage Trello kanban (Clawboard)")
   .option("--json", "output raw JSON", false)
   .option("--pretty", "pretty-print JSON (only with --json)", false);
+
+program
+  .command("init")
+  .description("Initialize credentials (if missing) and create board config (if missing)")
+  .option("--key <key>", "Trello API key")
+  .option("--token <token>", "Trello API token")
+  .option("--name <boardName>", "board name (default: CLAWBOARD_NAME or Clawboard)")
+  .action(async (cmdOpts: { key?: string; token?: string; name?: string }) => {
+    const opts = program.opts<{ json: boolean; pretty: boolean }>();
+
+    if (cmdOpts.name) process.env.CLAWBOARD_NAME = cmdOpts.name;
+
+    let creds = maybeLoadCreds();
+    if (!creds) {
+      const res = await initAuthFromArgs({ key: cmdOpts.key, token: cmdOpts.token });
+      creds = loadCreds();
+      if (!opts.json) {
+        process.stderr.write(`[clawboard] Wrote credentials: ${res.path}\n`);
+      }
+    } else {
+      const status = await checkCreds(creds);
+      if (!status.ok) throw new Error(`Trello auth check failed: ${status.error}`);
+    }
+
+    const board = await ensureBoardConfig(creds);
+
+    if (opts.json) {
+      printJson({ ok: true, board }, opts.pretty);
+      return;
+    }
+
+    const lines: string[] = [];
+    lines.push(`# Clawboard init`);
+    lines.push("");
+    if (board.boardUrl) lines.push(`- board: ${board.boardUrl}`);
+    lines.push(`- boardId: \`${mdEscape(board.boardId)}\``);
+    lines.push(`- lists: todo/doing/done ready`);
+    printMarkdown(lines);
+  });
 
 program
   .command("status")
