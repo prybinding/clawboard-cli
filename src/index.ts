@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { loadBoard, loadCreds } from "./config.js";
+import { loadCreds } from "./config.js";
+import { ensureBoardConfig } from "./init.js";
 import { fmtDate, fmtNum, mdEscape, printJson, printMarkdown, truncate } from "./format.js";
 import { resolveCardId, trelloRequest } from "./trello.js";
 
@@ -20,7 +21,7 @@ program
   .action(async () => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = loadBoard();
+    const board = await ensureBoardConfig(creds);
 
     const lists = [
       { key: "todo", name: "To do", id: board.lists.todo },
@@ -64,7 +65,7 @@ program
   .action(async (listKey: string, cmdOpts: { limit: string }) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = loadBoard();
+    const board = await ensureBoardConfig(creds);
 
     const limit = clampInt(cmdOpts.limit, 1, 200);
     const listId = listIdForKey(board, listKey);
@@ -105,7 +106,7 @@ program
   .action(async (title: string, cmdOpts: { desc?: string; due?: string; list: string }) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = loadBoard();
+    const board = await ensureBoardConfig(creds);
 
     const listId = listIdForKey(board, cmdOpts.list);
 
@@ -139,7 +140,7 @@ program
   .action(async (cardRef: string, listKey: string) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = loadBoard();
+    const board = await ensureBoardConfig(creds);
 
     const cardId = await resolveCardId(cardRef, creds);
     const listId = listIdForKey(board, listKey);
@@ -169,7 +170,7 @@ program
   .action(async (cardRef: string) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = loadBoard();
+    const board = await ensureBoardConfig(creds);
 
     const cardId = await resolveCardId(cardRef, creds);
     const listId = board.lists.done;
@@ -202,7 +203,7 @@ function clampInt(value: string, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function listIdForKey(board: ReturnType<typeof loadBoard>, key: string): string {
+function listIdForKey(board: Awaited<ReturnType<typeof ensureBoardConfig>>, key: string): string {
   const k = String(key).toLowerCase();
   if (k === "todo" || k === "to do" || k === "to-do") return board.lists.todo;
   if (k === "doing") return board.lists.doing;

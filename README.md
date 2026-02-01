@@ -18,7 +18,13 @@ clawboard --help
 
 The CLI reads:
 - `~/.config/trello/credentials.json` with `{ "key": "...", "token": "..." }`
-- `~/.config/trello/board.json` with `{ "boardId": "...", "boardUrl": "...", "lists": {"todo":"...","doing":"...","done":"..."} }`
+
+If `~/.config/trello/board.json` is missing, the CLI will **auto-create** a board named **Clawboard** with lists:
+- `To do`
+- `Doing`
+- `Done`
+
+(Override default board name with `CLAWBOARD_NAME`.)
 
 ## Commands
 
