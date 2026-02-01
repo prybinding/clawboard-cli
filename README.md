@@ -22,10 +22,12 @@ The CLI reads:
 Use `clawboard init` to set up auth + board.
 
 - If `~/.config/trello/credentials.json` is missing, `clawboard init --key ... --token ...` will write it.
-- If `~/.config/trello/board.json` is missing, commands will **auto-create** a board named **Clawboard** with lists:
-  - `To do`
-  - `Doing`
-  - `Done`
+- If `~/.config/trello/board.json` is missing, most commands will error and tell you to run `clawboard init`.
+
+`clawboard init` creates a board named **Clawboard** with lists:
+- `To do`
+- `Doing`
+- `Done`
 
 Override default board name with `CLAWBOARD_NAME` (or `clawboard init --name "..."`).
 

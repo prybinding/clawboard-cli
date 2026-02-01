@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import { loadCreds } from "./config.js";
-import { ensureBoardConfig } from "./init.js";
+import { createBoardConfig, loadBoardConfig } from "./init.js";
 import { checkCreds, initAuthFromArgs, maybeLoadCreds } from "./auth.js";
 import { fmtDate, fmtNum, mdEscape, printJson, printMarkdown, truncate } from "./format.js";
 import { resolveCardId, trelloRequest } from "./trello.js";
@@ -18,7 +18,7 @@ program
 
 program
   .command("init")
-  .description("Initialize credentials (if missing) and create board config (if missing)")
+  .description("Initialize credentials (if missing) and create a board config")
   .option("--key <key>", "Trello API key")
   .option("--token <token>", "Trello API token")
   .option("--name <boardName>", "board name (default: CLAWBOARD_NAME or Clawboard)")
@@ -39,7 +39,7 @@ program
       if (!status.ok) throw new Error(`Trello auth check failed: ${status.error}`);
     }
 
-    const board = await ensureBoardConfig(creds);
+    const board = await createBoardConfig(creds);
 
     if (opts.json) {
       printJson({ ok: true, board }, opts.pretty);
@@ -61,7 +61,7 @@ program
   .action(async () => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = await ensureBoardConfig(creds);
+    const board = loadBoardConfig();
 
     const lists = [
       { key: "todo", name: "To do", id: board.lists.todo },
@@ -105,7 +105,7 @@ program
   .action(async (listKey: string, cmdOpts: { limit: string }) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = await ensureBoardConfig(creds);
+    const board = loadBoardConfig();
 
     const limit = clampInt(cmdOpts.limit, 1, 200);
     const listId = listIdForKey(board, listKey);
@@ -146,7 +146,7 @@ program
   .action(async (title: string, cmdOpts: { desc?: string; due?: string; list: string }) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = await ensureBoardConfig(creds);
+    const board = loadBoardConfig();
 
     const listId = listIdForKey(board, cmdOpts.list);
 
@@ -180,7 +180,7 @@ program
   .action(async (cardRef: string, listKey: string) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = await ensureBoardConfig(creds);
+    const board = loadBoardConfig();
 
     const cardId = await resolveCardId(cardRef, creds);
     const listId = listIdForKey(board, listKey);
@@ -210,7 +210,7 @@ program
   .action(async (cardRef: string) => {
     const opts = program.opts<{ json: boolean; pretty: boolean }>();
     const creds = loadCreds();
-    const board = await ensureBoardConfig(creds);
+    const board = loadBoardConfig();
 
     const cardId = await resolveCardId(cardRef, creds);
     const listId = board.lists.done;
@@ -243,7 +243,7 @@ function clampInt(value: string, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function listIdForKey(board: Awaited<ReturnType<typeof ensureBoardConfig>>, key: string): string {
+function listIdForKey(board: ReturnType<typeof loadBoardConfig>, key: string): string {
   const k = String(key).toLowerCase();
   if (k === "todo" || k === "to do" || k === "to-do") return board.lists.todo;
   if (k === "doing") return board.lists.doing;

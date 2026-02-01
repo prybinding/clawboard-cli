@@ -40,14 +40,23 @@ export function boardConfigPath() {
   return path.join(os.homedir(), ".config", "trello", "board.json");
 }
 
-export async function ensureBoardConfig(creds: TrelloCredentials): Promise<BoardConfig> {
+export function loadBoardConfig(): BoardConfig {
   const p = boardConfigPath();
-  if (fs.existsSync(p)) {
-    const raw = fs.readFileSync(p, "utf-8");
-    return JSON.parse(raw) as BoardConfig;
+  if (!fs.existsSync(p)) {
+    const msg = [
+      `Missing Trello board config: ${p}`,
+      `Run: clawboard init --key <TRELLO_KEY> --token <TRELLO_TOKEN>`,
+      `Or set up ${p} manually.`,
+    ].join("\n");
+    throw new Error(msg);
   }
+  const raw = fs.readFileSync(p, "utf-8");
+  return JSON.parse(raw) as BoardConfig;
+}
 
-  // Auto-initialize if missing.
+export async function createBoardConfig(creds: TrelloCredentials): Promise<BoardConfig> {
+  const p = boardConfigPath();
+
   const boardName = process.env.CLAWBOARD_NAME?.trim() || "Clawboard";
 
   const board = await trelloRequest<any>("POST", "/boards", creds, {
