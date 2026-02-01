@@ -1,0 +1,25 @@
+{
+  "name": "clawboard-cli",
+  "version": "0.1.0",
+  "description": "CLI for managing a Trello kanban board (Clawboard)",
+  "type": "module",
+  "bin": {
+    "clawboard": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --target node22 --sourcemap --dts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "tsup": "^8.0.2",
+    "typescript": "^5.7.3"
+  },
+  "license": "MIT"
+}
